@@ -1,0 +1,39 @@
+{
+    "name": "ipdl",
+    "displayName": "IPDL",
+    "description": "Syntax highlighting for IPDL",
+    "publisher": "djg",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.46.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "ipdl",
+                "aliases": [
+                    "IPDL",
+                    "ipdl"
+                ],
+                "extensions": [
+                    ".ipdl",
+                    ".ipdlh"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "ipdl",
+                "scopeName": "source.ipdl",
+                "path": "./syntaxes/ipdl.tmLanguage.json"
+            }
+        ]
+    },
+    "devDependencies": {
+        "js-yaml": "^3.14.0"
+    }
+}

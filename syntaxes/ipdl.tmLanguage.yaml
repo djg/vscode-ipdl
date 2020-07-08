@@ -1,0 +1,196 @@
+$schema: 'https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json'
+name: IPDL
+scopeName: source.ipdl
+fileTypes:
+  - ipdl
+  - ipdlh
+patterns:
+  - include: '#full-language'
+repository:
+  full-language:
+    patterns:
+      - include: '#special_block'
+      - include: '#preprocessor'
+      - include: '#symbols'
+      - include: '#comment'
+      - include: '#strings'
+  symbols:
+    patterns:
+      - name: operator.namespace-separator.ipdl
+        match: '::'
+      - name: punctuation.line-end.ipdl
+        match: ;
+      - name: support.namespace-outer.ipdl
+        match: '\b([:alpha:][:word:]*)(::)'
+        captures:
+          '0':
+            name: operator.namespace-separator.ipdl
+          '1':
+            name: support.namespace-name.ipdl
+      - match: '\b([_a-zA-Z]\w*)\b'
+        captures:
+          '1':
+            patterns:
+              - name: storage.type.access.ipdl
+                match: \b(child|parent)\b
+              - name: storage.type.manager.ipdl
+                match: \b(manager)\b
+              - name: storage.modifier.async.ipdl
+                match: \b(async)\b
+              - name: storage.modifier.sync.ipdl
+                match: \b(sync)\b
+              - name: keyword.control.ipdl
+                match: \b(return)\b
+              - name: storage.type.builtin.ipdl
+                match: >-
+                  \b(bool|char|int8_t|int16_t|int32_t|int64_t|uint8_t|uint16_t|uint32_t|uint64_t)\b
+              - name: storage.type.struct.ipdl
+                match: \b(struct|union)\b
+  comment:
+    patterns:
+      - name: comment.line
+        match: //.*$
+      - name: comment.block
+        begin: /\*
+        end: \*/
+  strings:
+    name: string.quoted.double.ipdl
+    begin: '"'
+    end: '"'
+    patterns:
+      - name: constant.character.escape.ipdl
+        match: \\.
+  special_block:
+    patterns:
+      - name: meta.namespace-block.ipdl
+        begin: \b(namespace)\s*([:alpha:][:word:]*\b)?+
+        beginCapures:
+          '1':
+            name: storage.type.ipdl
+          '2':
+            name: entity.name.type.ipdl
+            patterns:
+              - include: '#symbols'
+        captures:
+          '1':
+            name: keyword.control.namespace.$2
+        end: (?<=\})
+        patterns:
+          - begin: \{
+            beginCaptures:
+              '0':
+                name: punctuation.definition.scope.ipdl
+            end: \}
+            endCaptures:
+              '0':
+                name: punctuation.definition.scope.ipdl
+            patterns:
+              - include: '#special_block'
+              - include: $base
+          - include: $base
+      - name: meta.class-struct-block.ipdl
+        begin: \b(struct)\s*([:alpha:][:word:]*\b)?+
+        beginCaptures:
+          '1':
+            name: storage.type.ipdl
+          '2':
+            name: entity.name.type.ipdl
+            patterns:
+              - include: '#symbols'
+        end: '(?<=\})|(?=(;))'
+        patterns:
+          - begin: '\{'
+            beginCaptures:
+              '0':
+                name: punctuation.section.block.begin.ipdl
+            end: '(\})(\s*\n)?'
+            endCaptures:
+              '1':
+                name: punctuation.section.block.end.ipdl
+              '2':
+                name: invalid.illegal.you-forgot-semicolon.ipdl
+            patterns:
+              - include: '#special_block'
+              - include: $base
+          - include: $base
+  preprocessor:
+    patterns:
+      - include: '#preprocessor-ifdef-ifndef'
+      - include: '#preprocessor-if-elif'
+      - include: '#preprocessor-else'
+      - include: '#preprocessor-end-if'
+  preprocessor-ifdef-ifndef:
+    name: meta.preprocessor.block
+    begin: '^\s*((#)\s*(if(?:n?def)))\s+([_A-Za-z]\w*)\b'
+    beginCaptures:
+      '1':
+        name: meta.preprocessor.command.ipdl
+      '2':
+        name: meta.preprocessor.hash.ipdl
+      '3':
+        name: meta.preprocessor.keyword.$3.ipdl
+      '4':
+        patterns:
+          - include: '#symbols'
+    end: '(?=(?://|/\*))|(?<!\\)(?=\n)'
+    patterns:
+      - include: '#invalid'
+      - include: '#line-continuation'
+  preprocessor-if-elif:
+    name: meta.preprocessor.block
+    begin: ^\s*((#)\s*(if|elif))\b
+    beginCaptures:
+      '1':
+        name: meta.preprocessor.command.ipdl
+      '2':
+        name: meta.preprocessor.hash.ipdl
+      '3':
+        name: meta.preprocessor.keyword.$3.ipdl
+    end: '(?=(?://|/\*))|(?<!\\)(?=\n)'
+    patterns:
+      - include: '#preprocessor-if-content'
+      - include: '#line-continuation'
+  preprocessor-else:
+    name: meta.preprocessor.block
+    begin: ^\s*((#)\s*(else))\b
+    beginCaptures:
+      '1':
+        name: meta.preprocessor.command.ipdl
+      '2':
+        name: meta.preprocessor.hash.ipdl
+      '3':
+        name: meta.preprocessor.keyword.$3.ipdl
+    end: '(?=(?://|/\*))|(?<!\\)(?=\n)'
+    patterns:
+      - include: '#preprocessor-if-content'
+      - include: '#line-continuation'
+  preprocessor-end-if:
+    name: meta.preprocessor.block
+    begin: ^\s*((#)\s*(endif))\b
+    beginCaptures:
+      '1':
+        name: meta.preprocessor.command.ipdl
+      '2':
+        name: meta.preprocessor.hash.ipdl
+      '3':
+        name: meta.preprocessor.keyword.$3.ipdl
+    end: '(?=(?://|/\*))|(?<!\\)(?=\n)'
+    patterns:
+      - include: '#invalid'
+      - include: '#line-continuation'
+  preprocessor-if-content:
+    patterns:
+      - include: $base
+  invalid:
+    name: invalid
+    match: '\b(\w+)\b|[-+*\/%{}()<>\[\]:;\?\.,"''`@#$!~|&^]'
+line-continuation:
+    patterns:
+      - match: (\\\s+)\n
+        captures:
+          '1':
+            name: meta.invalid-continuation.ipdl
+      - match: (\\)\n
+        captures:
+          '1':
+            name: meta.line-continuation.ipdl
